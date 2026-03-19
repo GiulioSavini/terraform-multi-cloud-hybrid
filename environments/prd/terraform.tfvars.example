@@ -1,0 +1,15 @@
+# Production Environment
+project     = "hybrid-lz"
+environment = "prd"
+
+aws_region            = "eu-west-1"
+azure_subscription_id = "00000000-0000-0000-0000-000000000000"
+azure_location        = "westeurope"
+azure_tenant_id       = "00000000-0000-0000-0000-000000000000"
+gcp_project_id        = "my-gcp-project-prd"
+gcp_region            = "europe-west1"
+
+domain_name            = "hybrid.example.com"
+alarm_email            = "oncall@example.com"
+enable_cross_cloud_vpn = true
+# vpn_shared_key       = "retrieve-from-vault"
