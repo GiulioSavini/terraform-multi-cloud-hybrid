@@ -1,0 +1,92 @@
+name: "Terraform Drift Detection"
+
+on:
+  schedule:
+    - cron: "0 6 * * 1-5" # Weekdays at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to check"
+        required: true
+        default: "prd"
+        type: choice
+        options:
+          - dev
+          - stg
+          - prd
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+env:
+  TF_VERSION: "1.9.0"
+
+jobs:
+  drift-detect:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.environment)) || fromJSON('["dev","stg","prd"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: environments/${{ matrix.environment }}
+
+      - name: Terraform Plan (Drift Detection)
+        id: plan
+        run: |
+          terraform plan -var-file=terraform.tfvars -detailed-exitcode -no-color 2>&1 | tee drift-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        working-directory: environments/${{ matrix.environment }}
+        continue-on-error: true
+
+      - name: Create Issue on Drift
+        if: steps.plan.outputs.exit_code == '2'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const drift = fs.readFileSync('environments/${{ matrix.environment }}/drift-output.txt', 'utf8');
+            const truncated = drift.length > 60000 ? drift.substring(0, 60000) + '\n... (truncated)' : drift;
+            const title = `🔄 Drift detected in \`${{ matrix.environment }}\` - ${new Date().toISOString().split('T')[0]}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'drift,${{ matrix.environment }}',
+              state: 'open'
+            });
+            if (existing.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: `## Infrastructure Drift Detected\n\n**Environment:** \`${{ matrix.environment }}\`\n**Detected at:** ${new Date().toISOString()}\n\n\`\`\`hcl\n${truncated}\n\`\`\`\n\n### Action Required\nReview the changes above and either:\n1. Apply the Terraform configuration to fix drift\n2. Update Terraform code to match current state`,
+                labels: ['drift', '${{ matrix.environment }}', 'infrastructure']
+              });
+            }

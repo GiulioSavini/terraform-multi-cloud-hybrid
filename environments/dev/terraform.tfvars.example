@@ -1,0 +1,25 @@
+# =============================================================================
+# Dev Environment - terraform.tfvars
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+project     = "hybrid-lz"
+environment = "dev"
+
+# AWS
+aws_region = "eu-west-1"
+
+# Azure
+azure_subscription_id = "00000000-0000-0000-0000-000000000000"
+azure_location        = "westeurope"
+azure_tenant_id       = "00000000-0000-0000-0000-000000000000"
+
+# GCP
+gcp_project_id = "my-gcp-project-id"
+gcp_region     = "europe-west1"
+
+# General
+domain_name            = "hybrid.example.com"
+alarm_email            = "devops@example.com"
+enable_cross_cloud_vpn = false
+# vpn_shared_key       = "use-secrets-manager-in-production"
