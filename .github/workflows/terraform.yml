@@ -12,6 +12,7 @@ on:
     paths:
       - "environments/**"
       - "modules/**"
+      - ".github/workflows/terraform.yml"
 
 permissions:
   contents: read
@@ -29,7 +30,7 @@ jobs:
     outputs:
       environments: ${{ steps.changes.outputs.environments }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -47,7 +48,7 @@ jobs:
   terraform-fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -61,7 +62,7 @@ jobs:
       matrix:
         environment: [dev, stg, prd]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -76,18 +77,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: [terraform-validate]
     steps:
-      - uses: actions/checkout@v4
-      - name: tfsec
-        uses: aquasecurity/tfsec-action@v1.0.3
+      - uses: actions/checkout@v5
+
+      - name: Run Trivy (IaC scan)
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          soft_fail: true
-          additional_args: "--out tfsec-results"
-      - name: Checkov
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          directory: .
-          quiet: true
-          soft_fail: true
+          scan-type: config
+          scan-ref: .
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: 0
+          format: table
+
+      - name: Run Checkov
+        run: |
+          pip install -q checkov
+          checkov -d . --quiet --compact --soft-fail \
+            --framework terraform \
+            --output cli \
+            || true
 
   infracost:
     runs-on: ubuntu-latest
@@ -97,7 +104,7 @@ jobs:
       matrix:
         environment: [dev, stg, prd]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: infracost/actions/setup@v3
         with:
           api-key: ${{ env.INFRACOST_API_KEY }}
@@ -119,14 +126,14 @@ jobs:
 
   terraform-plan:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && vars.CLOUD_CREDENTIALS_CONFIGURED == 'true'
     needs: [security-scan]
     strategy:
       matrix:
         environment: [dev, stg, prd]
     environment: ${{ matrix.environment }}-plan
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -183,7 +190,7 @@ jobs:
 
   terraform-apply:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.CLOUD_CREDENTIALS_CONFIGURED == 'true'
     needs: [security-scan]
     strategy:
       max-parallel: 1
@@ -191,7 +198,7 @@ jobs:
         environment: [dev, stg, prd]
     environment: ${{ matrix.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
