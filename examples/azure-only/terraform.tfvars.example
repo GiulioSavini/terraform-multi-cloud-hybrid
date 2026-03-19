@@ -1,0 +1,6 @@
+# Azure-Only Example
+# Copy to terraform.tfvars and fill in your values
+
+azure_subscription_id = "00000000-0000-0000-0000-000000000000"
+azure_tenant_id       = "00000000-0000-0000-0000-000000000000"
+location              = "westeurope"
