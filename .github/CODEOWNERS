@@ -1,0 +1,19 @@
+# Code Owners for Terraform Multi-Cloud Hybrid
+#
+# These owners will be automatically requested for review
+# when a pull request modifies files matching the patterns.
+
+# Default owner for everything in the repository
+* @GiulioSavini
+
+# AWS modules
+modules/aws/ @GiulioSavini
+
+# Azure modules
+modules/azure/ @GiulioSavini
+
+# GCP modules
+modules/gcp/ @GiulioSavini
+
+# GitHub configuration and CI/CD
+.github/ @GiulioSavini
