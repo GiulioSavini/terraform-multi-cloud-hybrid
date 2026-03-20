@@ -204,9 +204,3 @@ resource "aws_cloudwatch_dashboard" "main" {
 }
 
 data "aws_region" "current" {}
-
-variable "kms_key_arn" {
-  description = "KMS key ARN for encrypting CloudWatch log groups and SNS topic. Leave empty to use default encryption."
-  type        = string
-  default     = ""
-}

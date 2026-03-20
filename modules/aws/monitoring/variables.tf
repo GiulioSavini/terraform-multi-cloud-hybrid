@@ -29,3 +29,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "kms_key_arn" {
+  description = "KMS key ARN for encrypting CloudWatch log groups and SNS topic. Leave empty to use default encryption."
+  type        = string
+  default     = ""
+}

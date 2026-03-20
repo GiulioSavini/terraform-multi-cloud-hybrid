@@ -29,14 +29,14 @@ resource "azurerm_key_vault" "main" {
 # Diagnostic Settings for NSG Flow Logs
 # ------------------------------------------------------------------------------
 resource "azurerm_storage_account" "security_logs" {
-  name                      = "${replace(local.name_prefix, "-", "")}seclogs"
-  resource_group_name       = var.resource_group_name
-  location                  = var.location
-  account_tier              = "Standard"
-  account_replication_type  = "LRS"
-  min_tls_version           = "TLS1_2"
-  allow_blob_public_access  = false
-  https_traffic_only        = true
+  name                              = "${replace(local.name_prefix, "-", "")}seclogs"
+  resource_group_name               = var.resource_group_name
+  location                          = var.location
+  account_tier                      = "Standard"
+  account_replication_type          = "LRS"
+  min_tls_version                   = "TLS1_2"
+  allow_nested_items_to_be_public   = false
+  https_traffic_only_enabled        = true
 
   blob_properties {
     delete_retention_policy {
@@ -45,10 +45,4 @@ resource "azurerm_storage_account" "security_logs" {
   }
 
   tags = local.common_tags
-}
-
-variable "allowed_subnet_ids" {
-  description = "List of subnet IDs allowed to access the Key Vault"
-  type        = list(string)
-  default     = []
 }

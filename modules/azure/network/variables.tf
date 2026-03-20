@@ -36,3 +36,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "flow_log_storage_account_id" {
+  description = "Storage account ID used for NSG flow log storage"
+  type        = string
+  default     = ""
+}
