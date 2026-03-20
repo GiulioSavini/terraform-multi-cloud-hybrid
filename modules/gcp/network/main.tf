@@ -103,20 +103,56 @@ resource "google_compute_firewall" "allow_health_check" {
   target_tags   = ["web-server"]
 }
 
-resource "google_compute_firewall" "allow_internal" {
-  name    = "${local.name_prefix}-allow-internal"
+# Web tier: allow HTTP/HTTPS from internet to web-server tagged instances
+resource "google_compute_firewall" "allow_web" {
+  name    = "${local.name_prefix}-allow-web"
   project = var.gcp_project_id
   network = google_compute_network.main.name
 
   allow {
     protocol = "tcp"
-    ports    = ["0-65535"]
+    ports    = ["80", "443"]
   }
 
+  source_ranges = [var.web_subnet_cidr]
+  target_tags   = ["web-server"]
+}
+
+# App tier: allow app ports from web subnet to app-server tagged instances
+resource "google_compute_firewall" "allow_app" {
+  name    = "${local.name_prefix}-allow-app"
+  project = var.gcp_project_id
+  network = google_compute_network.main.name
+
   allow {
-    protocol = "udp"
-    ports    = ["0-65535"]
+    protocol = "tcp"
+    ports    = ["8080", "8443"]
   }
+
+  source_ranges = [var.web_subnet_cidr]
+  target_tags   = ["app-server"]
+}
+
+# Data tier: allow database ports from app subnet to data-server tagged instances
+resource "google_compute_firewall" "allow_data" {
+  name    = "${local.name_prefix}-allow-data"
+  project = var.gcp_project_id
+  network = google_compute_network.main.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5432", "3306", "1433"]
+  }
+
+  source_ranges = [var.app_subnet_cidr]
+  target_tags   = ["data-server"]
+}
+
+# Internal ICMP for diagnostics
+resource "google_compute_firewall" "allow_internal_icmp" {
+  name    = "${local.name_prefix}-allow-internal-icmp"
+  project = var.gcp_project_id
+  network = google_compute_network.main.name
 
   allow {
     protocol = "icmp"

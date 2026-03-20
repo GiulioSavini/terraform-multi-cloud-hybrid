@@ -4,19 +4,19 @@ locals {
 
   subnets = {
     web = {
-      address_prefix = cidrsubnet(var.vnet_cidr, 8, 1)
+      address_prefix    = cidrsubnet(var.vnet_cidr, 8, 1)
       service_endpoints = ["Microsoft.Web"]
     }
     app = {
-      address_prefix = cidrsubnet(var.vnet_cidr, 8, 2)
+      address_prefix    = cidrsubnet(var.vnet_cidr, 8, 2)
       service_endpoints = ["Microsoft.KeyVault", "Microsoft.Storage"]
     }
     data = {
-      address_prefix = cidrsubnet(var.vnet_cidr, 8, 3)
+      address_prefix    = cidrsubnet(var.vnet_cidr, 8, 3)
       service_endpoints = ["Microsoft.Sql", "Microsoft.Storage"]
     }
     gateway = {
-      address_prefix = cidrsubnet(var.vnet_cidr, 8, 254)
+      address_prefix    = cidrsubnet(var.vnet_cidr, 8, 254)
       service_endpoints = []
     }
   }
@@ -250,12 +250,34 @@ resource "azurerm_virtual_network_gateway" "main" {
 }
 
 # ------------------------------------------------------------------------------
-# Network Watcher Flow Logs
+# Network Watcher
 # ------------------------------------------------------------------------------
 resource "azurerm_network_watcher" "main" {
   name                = "${local.name_prefix}-nw"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+# ------------------------------------------------------------------------------
+# Network Watcher Flow Log
+# ------------------------------------------------------------------------------
+resource "azurerm_network_watcher_flow_log" "web" {
+  count = var.flow_log_storage_account_id != "" ? 1 : 0
+
+  network_watcher_name = azurerm_network_watcher.main.name
+  resource_group_name  = var.resource_group_name
+  name                 = "${local.name_prefix}-nsg-web-flowlog"
+
+  network_security_group_id = azurerm_network_security_group.web.id
+  storage_account_id        = var.flow_log_storage_account_id
+  enabled                   = true
+
+  retention_policy {
+    enabled = true
+    days    = var.environment == "prd" ? 90 : 30
+  }
 
   tags = local.common_tags
 }

@@ -32,7 +32,7 @@ resource "google_monitoring_uptime_check_config" "https" {
     path         = "/health"
     port         = 443
     use_ssl      = true
-    validate_ssl = false
+    validate_ssl = var.environment == "prd" ? true : false
   }
 
   monitored_resource {
