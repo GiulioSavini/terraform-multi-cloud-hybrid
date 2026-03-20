@@ -20,8 +20,11 @@ resource "google_compute_instance_template" "main" {
     disk_type    = "pd-balanced"
     disk_size_gb = 20
 
-    disk_encryption_key {
-      kms_key_self_link = ""
+    dynamic "disk_encryption_key" {
+      for_each = var.kms_key_self_link != "" ? [1] : []
+      content {
+        kms_key_self_link = var.kms_key_self_link
+      }
     }
   }
 
@@ -170,7 +173,7 @@ resource "google_compute_managed_ssl_certificate" "main" {
   project = var.gcp_project_id
 
   managed {
-    domains = ["${var.environment}.hybrid.example.com"]
+    domains = ["${var.environment}.${var.domain_name}"]
   }
 }
 
@@ -206,4 +209,16 @@ resource "google_compute_global_forwarding_rule" "http_redirect" {
   target     = google_compute_target_http_proxy.redirect.id
   port_range = "80"
   ip_address = google_compute_global_address.main.address
+}
+
+variable "kms_key_self_link" {
+  description = "Self-link of the KMS key to use for disk encryption. Leave empty to skip encryption."
+  type        = string
+  default     = ""
+}
+
+variable "domain_name" {
+  description = "Base domain name used for the managed SSL certificate"
+  type        = string
+  default     = "hybrid.example.com"
 }
