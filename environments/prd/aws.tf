@@ -19,7 +19,6 @@ module "aws_security" {
   project     = var.project
   environment = var.environment
   vpc_id      = module.aws_network.vpc_id
-  vpc_cidr    = "10.0.0.0/16"
   tags        = local.common_tags
 }
 

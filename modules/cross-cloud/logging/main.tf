@@ -103,6 +103,14 @@ resource "google_storage_bucket" "centralized_logs" {
 
   uniform_bucket_level_access = true
 
+  versioning {
+    enabled = true
+  }
+
+  retention_policy {
+    retention_period = var.environment == "prd" ? 31536000 : 7776000 # 365 or 90 days in seconds
+  }
+
   lifecycle_rule {
     condition {
       age = 30
