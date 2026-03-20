@@ -7,8 +7,9 @@ locals {
 # SNS Topic for Alarms
 # ------------------------------------------------------------------------------
 resource "aws_sns_topic" "alarms" {
-  name = "${local.name_prefix}-alarms"
-  tags = local.common_tags
+  name              = "${local.name_prefix}-alarms"
+  kms_master_key_id = var.kms_key_arn != "" ? var.kms_key_arn : null
+  tags              = local.common_tags
 }
 
 resource "aws_sns_topic_subscription" "email" {
@@ -25,6 +26,7 @@ resource "aws_sns_topic_subscription" "email" {
 resource "aws_cloudwatch_log_group" "application" {
   name              = "/${local.name_prefix}/application"
   retention_in_days = var.environment == "prd" ? 90 : 30
+  kms_key_id        = var.kms_key_arn != "" ? var.kms_key_arn : null
 
   tags = local.common_tags
 }
@@ -32,6 +34,7 @@ resource "aws_cloudwatch_log_group" "application" {
 resource "aws_cloudwatch_log_group" "nginx_access" {
   name              = "/aws/ec2/nginx/access"
   retention_in_days = var.environment == "prd" ? 90 : 30
+  kms_key_id        = var.kms_key_arn != "" ? var.kms_key_arn : null
 
   tags = local.common_tags
 }
@@ -39,6 +42,7 @@ resource "aws_cloudwatch_log_group" "nginx_access" {
 resource "aws_cloudwatch_log_group" "nginx_error" {
   name              = "/aws/ec2/nginx/error"
   retention_in_days = var.environment == "prd" ? 90 : 30
+  kms_key_id        = var.kms_key_arn != "" ? var.kms_key_arn : null
 
   tags = local.common_tags
 }
@@ -200,3 +204,9 @@ resource "aws_cloudwatch_dashboard" "main" {
 }
 
 data "aws_region" "current" {}
+
+variable "kms_key_arn" {
+  description = "KMS key ARN for encrypting CloudWatch log groups and SNS topic. Leave empty to use default encryption."
+  type        = string
+  default     = ""
+}

@@ -2,6 +2,14 @@
 # GCP Resources - Dev Environment
 # =============================================================================
 
+locals {
+  gcp_labels = {
+    project     = lower(var.project)
+    environment = lower(var.environment)
+    managed_by  = "terraform"
+  }
+}
+
 module "gcp_network" {
   source = "../../modules/gcp/network"
 
@@ -9,7 +17,7 @@ module "gcp_network" {
   environment    = var.environment
   gcp_project_id = var.gcp_project_id
   region         = var.gcp_region
-  labels         = local.common_tags
+  labels         = local.gcp_labels
 }
 
 module "gcp_security" {
@@ -18,7 +26,7 @@ module "gcp_security" {
   project        = var.project
   environment    = var.environment
   gcp_project_id = var.gcp_project_id
-  labels         = local.common_tags
+  labels         = local.gcp_labels
 }
 
 module "gcp_compute" {
@@ -34,7 +42,7 @@ module "gcp_compute" {
   min_replicas          = 1
   max_replicas          = 2
   service_account_email = module.gcp_security.compute_service_account_email
-  labels                = local.common_tags
+  labels                = local.gcp_labels
 }
 
 module "gcp_monitoring" {
