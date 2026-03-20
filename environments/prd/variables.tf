@@ -64,5 +64,6 @@ variable "enable_cross_cloud_vpn" {
 variable "vpn_shared_key" {
   description = "Pre-shared key for VPN connections"
   type        = string
+  default     = ""
   sensitive   = true
 }
