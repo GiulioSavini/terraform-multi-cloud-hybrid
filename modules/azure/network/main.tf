@@ -264,6 +264,8 @@ resource "azurerm_network_watcher" "main" {
 # Network Watcher Flow Log
 # ------------------------------------------------------------------------------
 resource "azurerm_network_watcher_flow_log" "web" {
+  count = var.flow_log_storage_account_id != "" ? 1 : 0
+
   network_watcher_name = azurerm_network_watcher.main.name
   resource_group_name  = var.resource_group_name
   name                 = "${local.name_prefix}-nsg-web-flowlog"
@@ -278,10 +280,4 @@ resource "azurerm_network_watcher_flow_log" "web" {
   }
 
   tags = local.common_tags
-}
-
-variable "flow_log_storage_account_id" {
-  description = "Storage account ID used for NSG flow log storage"
-  type        = string
-  default     = ""
 }

@@ -19,17 +19,6 @@ variable "region" {
   default     = "europe-west1"
 }
 
-variable "zone" {
-  description = "GCP zone"
-  type        = string
-  default     = "europe-west1-b"
-}
-
-variable "network_self_link" {
-  description = "Self link of the VPC network"
-  type        = string
-}
-
 variable "subnet_self_link" {
   description = "Self link of the subnet"
   type        = string
@@ -62,4 +51,16 @@ variable "labels" {
   description = "Common labels"
   type        = map(string)
   default     = {}
+}
+
+variable "kms_key_self_link" {
+  description = "Self-link of the KMS key to use for disk encryption. Leave empty to skip encryption."
+  type        = string
+  default     = ""
+}
+
+variable "domain_name" {
+  description = "Base domain name used for the managed SSL certificate"
+  type        = string
+  default     = "hybrid.example.com"
 }
