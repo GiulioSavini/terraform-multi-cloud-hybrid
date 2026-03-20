@@ -19,6 +19,11 @@ variable "region" {
   default     = "europe-west1"
 }
 
+variable "network_self_link" {
+  description = "Self link of the VPC network"
+  type        = string
+}
+
 variable "subnet_self_link" {
   description = "Self link of the subnet"
   type        = string
