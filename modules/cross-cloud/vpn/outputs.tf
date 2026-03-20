@@ -9,6 +9,6 @@ output "aws_tunnel1_address" {
 }
 
 output "azure_connection_id" {
-  description = "Azure VPN connection ID"
-  value       = azurerm_virtual_network_gateway_connection.to_aws.id
+  description = "Azure VPN connection ID (tunnel 1)"
+  value       = azurerm_virtual_network_gateway_connection.to_aws_tunnel1.id
 }
