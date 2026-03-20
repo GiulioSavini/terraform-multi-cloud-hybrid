@@ -70,6 +70,16 @@ resource "azurerm_lb_rule" "https" {
   load_distribution              = "Default"
 }
 
+resource "azurerm_lb_probe" "http" {
+  name                = "${local.name_prefix}-http-probe"
+  loadbalancer_id     = azurerm_lb.main.id
+  protocol            = "Http"
+  port                = 80
+  request_path        = "/health"
+  interval_in_seconds = 15
+  number_of_probes    = 3
+}
+
 resource "azurerm_lb_rule" "http" {
   name                           = "${local.name_prefix}-http-rule"
   loadbalancer_id                = azurerm_lb.main.id
@@ -78,6 +88,7 @@ resource "azurerm_lb_rule" "http" {
   backend_port                   = 80
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id]
+  probe_id                       = azurerm_lb_probe.http.id
   enable_floating_ip             = false
 }
 

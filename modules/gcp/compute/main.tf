@@ -20,8 +20,11 @@ resource "google_compute_instance_template" "main" {
     disk_type    = "pd-balanced"
     disk_size_gb = 20
 
-    disk_encryption_key {
-      kms_key_self_link = ""
+    dynamic "disk_encryption_key" {
+      for_each = var.kms_key_self_link != "" ? [1] : []
+      content {
+        kms_key_self_link = var.kms_key_self_link
+      }
     }
   }
 
@@ -170,7 +173,7 @@ resource "google_compute_managed_ssl_certificate" "main" {
   project = var.gcp_project_id
 
   managed {
-    domains = ["${var.environment}.hybrid.example.com"]
+    domains = ["${var.environment}.${var.domain_name}"]
   }
 }
 

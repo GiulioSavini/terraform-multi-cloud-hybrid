@@ -18,7 +18,7 @@ apply: ## Apply Terraform changes (ENV=dev|stg|prd)
 	cd environments/$(ENV) && terraform apply tfplan
 
 destroy: ## Destroy infrastructure (ENV=dev|stg|prd)
-	cd environments/$(ENV) && terraform destroy -var-file=terraform.tfvars -auto-approve
+	cd environments/$(ENV) && terraform destroy -var-file=terraform.tfvars
 
 fmt: ## Format all Terraform files
 	terraform fmt -recursive .

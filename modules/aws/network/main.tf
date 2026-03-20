@@ -260,7 +260,7 @@ resource "aws_iam_role_policy" "flow_log" {
         "logs:DescribeLogStreams"
       ]
       Effect   = "Allow"
-      Resource = "*"
+      Resource = aws_cloudwatch_log_group.flow_log[0].arn
     }]
   })
 }

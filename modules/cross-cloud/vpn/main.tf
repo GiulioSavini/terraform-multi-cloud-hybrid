@@ -34,11 +34,11 @@ resource "aws_vpn_connection_route" "azure_vnet" {
 }
 
 # ==============================================================================
-# Azure Side - Local Network Gateway + Connection
+# Azure Side - Local Network Gateway + Connection (Tunnel 1)
 # ==============================================================================
 
-resource "azurerm_local_network_gateway" "aws" {
-  name                = "${local.name_prefix}-lgw-aws"
+resource "azurerm_local_network_gateway" "aws_tunnel1" {
+  name                = "${local.name_prefix}-lgw-aws-tunnel1"
   resource_group_name = var.azure_resource_group_name
   location            = var.azure_location
 
@@ -48,13 +48,50 @@ resource "azurerm_local_network_gateway" "aws" {
   tags = local.common_tags
 }
 
-resource "azurerm_virtual_network_gateway_connection" "to_aws" {
-  name                       = "${local.name_prefix}-conn-to-aws"
+resource "azurerm_virtual_network_gateway_connection" "to_aws_tunnel1" {
+  name                       = "${local.name_prefix}-conn-to-aws-tunnel1"
   resource_group_name        = var.azure_resource_group_name
   location                   = var.azure_location
   type                       = "IPsec"
   virtual_network_gateway_id = var.azure_vpn_gateway_id
-  local_network_gateway_id   = azurerm_local_network_gateway.aws.id
+  local_network_gateway_id   = azurerm_local_network_gateway.aws_tunnel1.id
+  shared_key                 = var.shared_key
+
+  ipsec_policy {
+    ike_encryption   = "AES256"
+    ike_integrity    = "SHA256"
+    dh_group         = "DHGroup14"
+    ipsec_encryption = "AES256"
+    ipsec_integrity  = "SHA256"
+    pfs_group        = "PFS14"
+    sa_lifetime      = 3600
+  }
+
+  tags = local.common_tags
+}
+
+# ==============================================================================
+# Azure Side - Local Network Gateway + Connection (Tunnel 2 - Redundancy)
+# ==============================================================================
+
+resource "azurerm_local_network_gateway" "aws_tunnel2" {
+  name                = "${local.name_prefix}-lgw-aws-tunnel2"
+  resource_group_name = var.azure_resource_group_name
+  location            = var.azure_location
+
+  gateway_address = aws_vpn_connection.to_azure.tunnel2_address
+  address_space   = [var.aws_vpc_cidr]
+
+  tags = local.common_tags
+}
+
+resource "azurerm_virtual_network_gateway_connection" "to_aws_tunnel2" {
+  name                       = "${local.name_prefix}-conn-to-aws-tunnel2"
+  resource_group_name        = var.azure_resource_group_name
+  location                   = var.azure_location
+  type                       = "IPsec"
+  virtual_network_gateway_id = var.azure_vpn_gateway_id
+  local_network_gateway_id   = azurerm_local_network_gateway.aws_tunnel2.id
   shared_key                 = var.shared_key
 
   ipsec_policy {
