@@ -64,8 +64,3 @@ resource "google_compute_security_policy" "main" {
     description = "Block SQL injection"
   }
 }
-
-output "security_policy_self_link" {
-  description = "Self-link of the Cloud Armor security policy"
-  value       = google_compute_security_policy.main.self_link
-}
