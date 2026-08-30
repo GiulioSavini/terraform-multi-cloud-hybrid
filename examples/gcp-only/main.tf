@@ -24,7 +24,10 @@ provider "google" {
 }
 
 variable "gcp_project_id" { type = string }
-variable "gcp_region" { type = string; default = "europe-west1" }
+variable "gcp_region" {
+  type    = string
+  default = "europe-west1"
+}
 
 locals {
   project     = "gcp-example"

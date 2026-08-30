@@ -25,7 +25,10 @@ provider "azurerm" {
 
 variable "azure_subscription_id" { type = string }
 variable "azure_tenant_id" { type = string }
-variable "location" { type = string; default = "westeurope" }
+variable "location" {
+  type    = string
+  default = "westeurope"
+}
 
 locals {
   project     = "azure-example"
