@@ -1,3 +1,0 @@
-# GCP-Only Example
-gcp_project_id = "my-gcp-project-id"
-gcp_region     = "europe-west1"
