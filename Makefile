@@ -1,57 +1,58 @@
-.PHONY: help init plan apply destroy fmt validate lint security docs clean
-
+# Deployment targets. ENV selects the deployment directory.
 ENV ?= dev
-AWS_REGION ?= eu-west-1
-AZURE_LOCATION ?= westeurope
-GCP_REGION ?= europe-west1
+DEPLOY := deployments/$(ENV)
+POLICY := compliance/policies
 
-help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+.PHONY: help init plan apply destroy fmt validate lint policy security check
 
-init: ## Initialize Terraform for the specified environment (ENV=dev|stg|prd)
-	cd environments/$(ENV) && terraform init -upgrade
+help:
+	@echo "make init|plan|apply|destroy ENV=dev|stg|prd"
+	@echo "make check    -- everything CI runs, locally"
 
-plan: ## Run Terraform plan (ENV=dev|stg|prd)
-	cd environments/$(ENV) && terraform plan -var-file=terraform.tfvars -out=tfplan
+init:
+	cd $(DEPLOY) && terraform init -upgrade
 
-apply: ## Apply Terraform changes (ENV=dev|stg|prd)
-	cd environments/$(ENV) && terraform apply tfplan
+plan:
+	cd $(DEPLOY) && terraform plan -var-file=terraform.tfvars -out=tfplan
 
-destroy: ## Destroy infrastructure (ENV=dev|stg|prd)
-	cd environments/$(ENV) && terraform destroy -var-file=terraform.tfvars
+apply:
+	cd $(DEPLOY) && terraform apply tfplan
 
-fmt: ## Format all Terraform files
-	terraform fmt -recursive .
+destroy:
+	cd $(DEPLOY) && terraform destroy -var-file=terraform.tfvars
 
-validate: ## Validate Terraform configuration
-	cd environments/$(ENV) && terraform validate
+fmt:
+	terraform fmt -recursive
 
-lint: ## Run TFLint
-	tflint --recursive --config .tflint.hcl
+# Every root that must stand on its own: the shared kernel, each bounded
+# context, the control catalog, the application and each deployment.
+ROOTS := platform/naming platform/tagging compliance/controls \
+         domains/networking domains/access-control domains/workload-hosting \
+         domains/service-discovery domains/observability \
+         applications/landing-zone \
+         deployments/dev deployments/stg deployments/prd
 
-security: ## Run security scans (tfsec + checkov)
-	tfsec . --soft-fail
-	checkov -d . --quiet
+validate:
+	@set -e; for d in $(ROOTS); do \
+		echo "==> $$d"; \
+		( cd $$d && terraform init -backend=false -input=false >/dev/null && terraform validate ); \
+	done
 
-cost: ## Estimate costs with Infracost
-	infracost breakdown --path environments/$(ENV)
+lint:
+	tflint --recursive --minimum-failure-severity=warning
 
-docs: ## Generate module documentation
-	terraform-docs markdown table --output-file README.md --output-mode inject modules/
+# Unit tests for the compliance policies themselves.
+policy:
+	conftest verify --policy $(POLICY)
 
-clean: ## Clean Terraform cache
-	find . -type d -name ".terraform" -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.tfplan" -delete 2>/dev/null || true
-	find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true
+# Evaluate a real plan against policy. Requires `make plan` first.
+policy-plan:
+	cd $(DEPLOY) && terraform show -json tfplan > tfplan.json
+	conftest test --policy $(POLICY) $(DEPLOY)/tfplan.json
 
-docker-shell: ## Launch Dockerized workspace
-	docker build -t tf-hybrid-workspace .
-	docker run -it --rm \
-		-v $(PWD):/workspace \
-		-v ~/.aws:/root/.aws:ro \
-		-v ~/.azure:/root/.azure:ro \
-		-v ~/.config/gcloud:/root/.config/gcloud:ro \
-		tf-hybrid-workspace
+security:
+	trivy config --exit-code 1 --severity CRITICAL,HIGH --ignorefile .trivyignore .
 
-pre-commit: ## Run pre-commit hooks
-	pre-commit run --all-files
+check: fmt validate policy
+	terraform fmt -check -recursive
+	./scripts/check-boundaries.sh

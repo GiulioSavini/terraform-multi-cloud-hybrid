@@ -38,3 +38,7 @@ Thumbs.db
 
 # Terragrunt
 .terragrunt-cache/
+
+# Local plan artifacts used by `make policy-plan`
+*.tfplan
+tfplan.json

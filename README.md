@@ -1,347 +1,128 @@
-# Terraform Multi-Cloud Hybrid Landing Zone
+# terraform-multi-cloud-hybrid
 
-Enterprise-grade multi-cloud landing zone with AWS, Azure, and GCP — featuring cross-cloud VPN connectivity, centralized logging, and automated infrastructure management.
+A hybrid landing zone across AWS, Azure and GCP, organised as **bounded
+contexts** rather than as a pile of provider modules.
 
-> **ITA:** Landing zone enterprise multi-cloud con connettivita cross-cloud VPN, logging centralizzato e gestione infrastruttura automatizzata.
+[![CI](https://github.com/GiulioSavini/terraform-multi-cloud-hybrid/actions/workflows/ci.yml/badge.svg)](https://github.com/GiulioSavini/terraform-multi-cloud-hybrid/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Architecture / Architettura
+## Why it is laid out this way
 
-```mermaid
-graph TB
-    subgraph AWS["AWS (eu-west-1)"]
-        direction TB
-        AWS_VPC["VPC 10.0.0.0/16"]
-        AWS_PUB["Public Subnets<br/>ALB + NAT GW"]
-        AWS_PRV["Private Subnets<br/>EC2 ASG + NGINX"]
-        AWS_DAT["Data Subnets"]
-        AWS_R53["Route53 DNS"]
-        AWS_CW["CloudWatch<br/>Monitoring + Alerts"]
-        AWS_VPC --> AWS_PUB --> AWS_PRV --> AWS_DAT
-    end
+Most multi-cloud Terraform is organised by provider — `modules/aws/network`,
+`modules/azure/network`, `modules/gcp/network`. That arrangement makes the
+cloud vendor the primary axis and the problem being solved a secondary one, so
+a change to "how networking works here" is spread across three trees, and every
+consumer has to branch per provider.
 
-    subgraph Azure["Azure (westeurope)"]
-        direction TB
-        AZ_VNET["VNet 10.1.0.0/16"]
-        AZ_WEB["Web Subnet<br/>Azure LB"]
-        AZ_APP["App Subnet<br/>VMSS + NGINX"]
-        AZ_DAT["Data Subnet"]
-        AZ_MON["Log Analytics + App Insights"]
-        AZ_VNET --> AZ_WEB --> AZ_APP --> AZ_DAT
-    end
+Here the **domain is the axis** and the provider is an implementation detail:
 
-    subgraph GCP["GCP (europe-west1)"]
-        direction TB
-        GCP_VPC["VPC Network"]
-        GCP_WEB["Web Subnet<br/>HTTPS LB"]
-        GCP_APP["App Subnet<br/>MIG + NGINX"]
-        GCP_MON["Cloud Monitoring + Logging"]
-        GCP_VPC --> GCP_WEB --> GCP_APP
-    end
-
-    subgraph CrossCloud["Cross-Cloud"]
-        VPN["IPsec VPN<br/>AWS - Azure"]
-        LOGS["Centralized Logging"]
-    end
-
-    AWS_VPC <--> VPN
-    AZ_VNET <--> VPN
-    AWS_CW --> LOGS
-    AZ_MON --> LOGS
-    GCP_MON --> LOGS
-
-    style AWS fill:#FF9900,color:#000
-    style Azure fill:#0078D4,color:#fff
-    style GCP fill:#4285F4,color:#fff
-    style CrossCloud fill:#333,color:#fff
+```
+domains/<context>/
+    contract.tf      the public interface and its invariants
+    variables.tf     what the context needs, in domain terms
+    outputs.tf       what the context publishes — the same shape for every cloud
+    README.md        the invariants, written down
+    aws/ azure/ gcp/ adapters, private to the context
 ```
 
-## Features / Funzionalita
+A consumer reads `outputs.tf`. It never reaches into `aws/`, `azure/` or
+`gcp/`, and `scripts/check-boundaries.sh` fails CI if it tries.
 
-| Feature | Description |
-|---------|-------------|
-| **3-Tier Networking** | Public/Private/Data subnets across all clouds |
-| **Auto Scaling** | ASG (AWS), VMSS (Azure), MIG (GCP) with CPU-based scaling |
-| **Load Balancing** | ALB, Azure LB, HTTP(S) LB with health checks |
-| **NGINX + SSL** | Auto-configured on all instances via user_data/cloud-init |
-| **Cross-Cloud VPN** | IPsec tunnel between AWS VPC and Azure VNet |
-| **Centralized Logging** | CloudWatch, Log Analytics, Cloud Logging |
-| **DNS Management** | Route53, Azure Private DNS, Cloud DNS |
-| **Security** | SG/NSG, IAM least privilege, managed identities, encryption |
-| **Monitoring** | Dashboards, alerts, uptime checks across all clouds |
-| **CI/CD** | GitHub Actions with plan/apply, Infracost, drift detection |
+### The contexts
 
----
+| Context | Owns |
+|---|---|
+| [`networking`](domains/networking) | Address space, subnet tiers, cross-cloud connectivity |
+| [`access-control`](domains/access-control) | Network perimeter and workload identity |
+| [`workload-hosting`](domains/workload-hosting) | Load balancers, autoscaling, the images they run |
+| [`service-discovery`](domains/service-discovery) | Public DNS records and private zones |
+| [`observability`](domains/observability) | Metrics, alarms, log retention, central archive |
 
-## Quick Start (One Command) / Avvio Rapido
+### The other layers
 
-```bash
-git clone https://github.com/GiulioSavini/terraform-multi-cloud-hybrid.git
-cd terraform-multi-cloud-hybrid
-
-# One command to set everything up
-./scripts/bootstrap.sh dev
+```
+platform/       shared kernel — naming and tagging, used by every context
+compliance/     control catalog and the rego policies that enforce it
+applications/   composition root — the only place contexts are wired together
+deployments/    one directory per environment: backend, providers, tfvars
 ```
 
-The bootstrap script will:
-1. Validate all prerequisites (terraform, aws, az, gcloud, etc.)
-2. Install pre-commit hooks
-3. Create remote state backends (S3, Azure Blob, GCS)
-4. Auto-discover your cloud variables and generate `terraform.tfvars`
-5. Initialize Terraform
+## Uniform contracts
 
-> **ITA:** Lo script bootstrap fa tutto: valida i prerequisiti, crea i backend remoti, scopre le variabili dai cloud provider e inizializza Terraform.
+Every context publishes the same shape whichever clouds are enabled, so a
+consumer writes one expression instead of three branches:
 
----
-
-## Manual Setup / Setup Manuale
-
-### Prerequisites / Prerequisiti
-
-| Tool | Version | Install |
-|------|---------|---------|
-| Terraform | >= 1.9.0 | [hashicorp.com/terraform](https://developer.hashicorp.com/terraform/install) |
-| AWS CLI | v2 | `pip install awscli` |
-| Azure CLI | latest | `curl -sL https://aka.ms/InstallAzureCLIDeb \| sudo bash` |
-| GCP CLI | latest | [cloud.google.com/sdk](https://cloud.google.com/sdk/docs/install) |
-| jq | any | `sudo apt install jq` |
-
-Optional: `tflint`, `tfsec`, `checkov`, `infracost`, `pre-commit`, `terragrunt`
-
-Validate all at once:
-
-```bash
-./scripts/validate-prereqs.sh
+```hcl
+networks = {
+  aws = {
+    id      = "vpc-0abc..."
+    cidr    = "10.0.0.0/16"
+    subnets = { web = [...], app = [...], data = [...] }
+  }
+}
 ```
 
-### Step-by-Step / Passo per Passo
+Subnet ids are always lists — AWS spreads a tier across availability zones,
+Azure and GCP return one subnet and are wrapped to match.
+
+The same idea drives `capacity`: AWS calls it `desired_capacity`, Azure calls it
+`instances`, GCP calls it replicas. The domain has one concept, validated once
+(`min <= desired <= max`, and `min >= 2`).
+
+## Compliance
+
+Controls are declared in [`compliance/controls`](compliance/controls) and mapped
+to **CIS Benchmarks, ISO 27001 Annex A, SOC 2 TSC and NIS2**. Each control names
+the context that implements it and the contract output that evidences it, so the
+matrix cannot drift away from the code without the plan failing.
+
+Enforcement happens in two places:
+
+- **Plan time, in the contexts.** Preconditions reject configurations that would
+  apply cleanly and not work: overlapping address space, alarms with no
+  recipient, production without TLS, flow logs with no destination.
+- **Plan time, in policy.** [`compliance/policies`](compliance/policies) holds
+  rego evaluated by conftest against the plan JSON. The policies have their own
+  unit tests — `conftest verify --policy compliance/policies` — and CI runs them.
+
+`terraform output compliance_evidence` returns the control values read from the
+contracts, ready to attach to an audit response.
+
+## Usage
 
 ```bash
-# 1. Authenticate to all clouds
-aws configure                              # AWS
-az login                                   # Azure
-gcloud auth application-default login      # GCP
-
-# 2. Auto-generate terraform.tfvars from your cloud config
-./scripts/get-variables.sh dev
-
-# 3. Review generated variables
-cat environments/dev/terraform.tfvars
-
-# 4. Create remote state backends
-./scripts/setup-backend.sh dev
-
-# 5. Initialize and plan
-make init ENV=dev
-make plan ENV=dev
-
-# 6. Apply
-make apply ENV=dev
-
-# 7. Verify endpoints
-curl -k https://$(terraform output -raw aws_alb_dns_name)/health
-curl -k https://$(terraform output -raw azure_lb_public_ip)/health
-curl -k https://$(terraform output -raw gcp_lb_ip)/health
-```
-
----
-
-## Scripts Reference / Riferimento Script
-
-| Script | Description |
-|--------|-------------|
-| `scripts/bootstrap.sh [env]` | One-command complete setup (validates + backend + tfvars + init) |
-| `scripts/validate-prereqs.sh` | Check all required tools and cloud authentication |
-| `scripts/get-variables.sh [env]` | Auto-discover cloud config and generate `terraform.tfvars` |
-| `scripts/setup-backend.sh [env]` | Create remote state backends (S3+DynamoDB, Azure Blob, GCS) |
-| `scripts/destroy-all.sh [env]` | Safe teardown with confirmations (triple confirm for prod) |
-
----
-
-## Examples / Esempi
-
-Ready-to-use examples for different deployment scenarios:
-
-| Example | Description | Path |
-|---------|-------------|------|
-| **Complete** | Full AWS + Azure + GCP with cross-cloud logging | `examples/complete/` |
-| **AWS Only** | VPC + ALB + ASG + NGINX + CloudWatch | `examples/aws-only/` |
-| **Azure Only** | VNet + VMSS + LB + NGINX + Log Analytics | `examples/azure-only/` |
-| **GCP Only** | VPC + MIG + HTTPS LB + NGINX + Monitoring | `examples/gcp-only/` |
-
-```bash
-# Run any example
-cd examples/aws-only
+cd deployments/dev
+cp terraform.tfvars.example terraform.tfvars   # then edit
 terraform init
-terraform apply
+terraform plan -out=plan.tfplan
+
+# Check the plan against policy before applying
+terraform show -json plan.tfplan > plan.json
+conftest test --policy ../../compliance/policies plan.json
+
+terraform apply plan.tfplan
 ```
 
----
+Deployments differ deliberately: `dev` is AWS-only with 90-day retention, `stg`
+adds Azure, `prd` spans all three with cross-cloud tunnels, central logging and
+365-day retention.
 
-## Environment Sizing / Dimensionamento
+## What this repository is not
 
-| Resource | Dev | Staging | Production |
-|----------|-----|---------|------------|
-| **AWS EC2** | t3.micro (1) | t3.small (2) | t3.medium (3-10) |
-| **Azure VMSS** | B1s (1) | B2s (2) | D2s_v5 (3-10) |
-| **GCP GCE** | e2-micro (1) | e2-small (2) | e2-standard-2 (3-10) |
-| **AWS NAT** | Single | Single | Per-AZ (HA) |
-| **Azure Zones** | Single | Single | Zone-balanced |
-| **Cross-Cloud VPN** | Disabled | Optional | Enabled |
-| **Log Retention** | 30 days | 60 days | 90 days |
-| **Est. Cost/month** | ~$50 | ~$200 | ~$800+ |
+It is a **reference landing zone**, not a product. It has never been applied
+against a billing account by its author — every check below is static: format,
+validate, lint, policy unit tests, misconfiguration scanning. Nothing here has
+been proven against live cloud APIs, and applying it will cost money.
 
----
+Read `deployments/prd/main.tf` before running anything.
 
-## Project Structure / Struttura Progetto
+## CI
 
-```
-terraform-multi-cloud-hybrid/
-├── scripts/                    # Bootstrap, validation, variable discovery
-│   ├── bootstrap.sh            # One-command setup
-│   ├── validate-prereqs.sh     # Check tools + auth
-│   ├── get-variables.sh        # Auto-generate tfvars
-│   ├── setup-backend.sh        # Create remote backends
-│   └── destroy-all.sh          # Safe teardown
-├── environments/
-│   ├── dev/                    # Development (small, cost-optimized)
-│   ├── stg/                    # Staging (medium, pre-prod)
-│   └── prd/                    # Production (HA, multi-AZ)
-├── modules/
-│   ├── aws/
-│   │   ├── network/            # VPC, 3-tier subnets, NAT, endpoints
-│   │   ├── compute/            # ALB + ASG + NGINX (user_data.sh)
-│   │   ├── security/           # Security Groups, IAM, instance profiles
-│   │   ├── monitoring/         # CloudWatch alarms, dashboards, SNS
-│   │   └── dns/                # Route53 zones, records, health checks
-│   ├── azure/
-│   │   ├── network/            # VNet, subnets, NSGs, VPN Gateway
-│   │   ├── compute/            # VMSS + LB + NGINX (cloud_init.yaml)
-│   │   ├── security/           # Key Vault, managed identity
-│   │   ├── monitoring/         # Log Analytics, App Insights, alerts
-│   │   └── dns/                # Private DNS zones, VNet links
-│   ├── gcp/
-│   │   ├── network/            # VPC, subnets, Cloud NAT, firewall
-│   │   ├── compute/            # MIG + HTTPS LB + NGINX (startup_script.sh)
-│   │   ├── security/           # Service accounts, Cloud Armor
-│   │   ├── monitoring/         # Alert policies, uptime checks, log sinks
-│   │   └── dns/                # Cloud DNS zones, records
-│   └── cross-cloud/
-│       ├── vpn/                # AWS-Azure IPsec VPN tunnel
-│       └── logging/            # Centralized logging across clouds
-├── examples/
-│   ├── complete/               # Full multi-cloud deployment
-│   ├── aws-only/               # AWS-only landing zone
-│   ├── azure-only/             # Azure-only landing zone
-│   └── gcp-only/               # GCP-only landing zone
-├── .github/
-│   ├── workflows/
-│   │   ├── terraform.yml       # CI/CD: plan on PR, apply on merge
-│   │   └── drift-detection.yml # Scheduled drift checks
-│   ├── ISSUE_TEMPLATE/         # Bug report + feature request templates
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   └── CODEOWNERS
-├── .tflint.hcl                 # TFLint configuration
-├── .pre-commit-config.yaml     # Pre-commit hooks (tfsec, tflint, checkov)
-├── Makefile                    # make init/plan/apply/destroy/lint/security
-├── Dockerfile                  # Dockerized workspace with all tools
-├── terragrunt.hcl              # Terragrunt root configuration
-├── CONTRIBUTING.md             # How to contribute
-├── SECURITY.md                 # Security policy
-├── CHANGELOG.md                # Version history
-└── LICENSE                     # MIT
-```
-
----
-
-## Makefile Commands
-
-```bash
-make help        # Show all commands
-make init        # terraform init (ENV=dev|stg|prd)
-make plan        # terraform plan
-make apply       # terraform apply
-make destroy     # terraform destroy
-make fmt         # Format all .tf files
-make validate    # Validate configuration
-make lint        # Run TFLint
-make security    # Run tfsec + checkov
-make cost        # Estimate costs with Infracost
-make pre-commit  # Run all pre-commit hooks
-make docker-shell # Launch Dockerized workspace
-```
-
----
-
-## Teardown / Distruzione
-
-```bash
-# Safe destroy with confirmations
-./scripts/destroy-all.sh dev
-
-# Or via Makefile
-make destroy ENV=dev
-```
-
-> Production requires typing `DESTROY-PRODUCTION` to confirm.
-
----
-
-## CI/CD Pipeline
-
-```
-PR Created --> fmt --> validate --> tfsec + checkov --> terraform plan --> Infracost --> Review
-                                                                                        |
-Merge to main --------> terraform apply (dev --> stg --> prd, sequential) <--------------
-
-Cron (weekday 06:00) --> drift detection --> auto-create GitHub issue if drift found
-```
-
-### Required GitHub Secrets
-
-| Secret | Description |
-|--------|-------------|
-| `AWS_ROLE_ARN` | IAM role for OIDC auth |
-| `AZURE_CLIENT_ID` | Azure AD app client ID |
-| `AZURE_TENANT_ID` | Azure AD tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | GCP WIF provider |
-| `GCP_SERVICE_ACCOUNT` | GCP service account |
-| `INFRACOST_API_KEY` | Infracost API key (optional) |
-
----
-
-## Security Best Practices
-
-- All instances in private subnets (no public IPs)
-- IMDSv2 enforced on AWS EC2
-- Managed identities on Azure (no service principal keys)
-- Shielded VMs on GCP
-- Encryption at rest on all storage
-- VPC Flow Logs / NSG Flow Logs enabled
-- Least-privilege IAM roles
-- Key Vault for secrets management
-- Cloud Armor WAF rules (XSS, SQLi protection)
-- Pre-commit hooks enforce security scanning before every commit
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-```bash
-# Quick start for contributors
-git checkout -b feat/my-feature
-make pre-commit              # Run all checks
-git commit -m "feat: add X"
-git push origin feat/my-feature
-# Open PR - plan runs automatically
-```
+`fmt`, `validate` across all twelve roots, context boundaries, policy unit
+tests, `tflint` and a Trivy config scan. Every job can fail the build; findings
+are fixed or suppressed in `.trivyignore` with a written reason, never hidden
+behind `continue-on-error`.
 
 ## License
 
-[MIT](LICENSE)
-
----
-
-*Built with Terraform by Senior Cloud Architects. Infrastructure as Code, done right.*
+MIT — see [LICENSE](LICENSE).

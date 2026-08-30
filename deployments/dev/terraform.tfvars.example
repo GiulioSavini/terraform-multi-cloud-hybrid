@@ -1,0 +1,21 @@
+environment         = "dev"
+owner               = "platform-team"
+cost_center         = "CC-1000"
+data_classification = "internal"
+
+domain_name = "dev.example.com"
+alarm_email = "platform-alerts@example.com"
+
+aws_region = "eu-west-1"
+
+# Azure and GCP are only read when the deployment lists those clouds.
+azure_subscription_id = ""
+azure_tenant_id       = ""
+gcp_project_id        = ""
+gcp_region            = "europe-west1"
+
+# Never commit the real value. Inject at apply time:
+#   TF_VAR_cross_cloud_shared_key="$(vault kv get -field=psk secret/hybrid/dev)"
+cross_cloud_shared_key = ""
+
+ssl_certificate_arn = ""

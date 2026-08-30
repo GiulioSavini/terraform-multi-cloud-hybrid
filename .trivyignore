@@ -1,0 +1,7 @@
+# Suppressions must name the control and the reason. An entry without a reason
+# is a finding someone hid, and review should treat it as one.
+
+# AVD-AWS-0053: the application load balancer is internet-facing by design.
+# Exposure is bounded by access-control's alb_ingress_cidrs, which policy
+# IAM-02 asserts on and which the landing zone publishes as evidence.
+AVD-AWS-0053
