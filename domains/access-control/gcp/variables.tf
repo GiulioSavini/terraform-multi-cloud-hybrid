@@ -13,8 +13,3 @@ variable "gcp_project_id" {
   type        = string
 }
 
-variable "labels" {
-  description = "Common labels"
-  type        = map(string)
-  default     = {}
-}

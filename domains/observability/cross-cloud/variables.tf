@@ -13,16 +13,6 @@ variable "gcp_project_id" {
   type        = string
 }
 
-variable "azure_resource_group_name" {
-  description = "Azure Resource Group name"
-  type        = string
-}
-
-variable "azure_location" {
-  description = "Azure location"
-  type        = string
-}
-
 variable "azure_log_analytics_workspace_id" {
   description = "Azure Log Analytics workspace ID"
   type        = string

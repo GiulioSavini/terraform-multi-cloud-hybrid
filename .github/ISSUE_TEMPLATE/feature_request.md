@@ -18,23 +18,15 @@ A clear and concise description of the feature or enhancement you would like to 
 
 Which module or cloud provider does this feature relate to?
 
-- [ ] modules/aws/network
-- [ ] modules/aws/compute
-- [ ] modules/aws/security
-- [ ] modules/aws/monitoring
-- [ ] modules/aws/dns
-- [ ] modules/azure/network
-- [ ] modules/azure/compute
-- [ ] modules/azure/security
-- [ ] modules/azure/monitoring
-- [ ] modules/azure/dns
-- [ ] modules/gcp/network
-- [ ] modules/gcp/compute
-- [ ] modules/gcp/security
-- [ ] modules/gcp/monitoring
-- [ ] modules/gcp/dns
-- [ ] modules/cross-cloud/vpn
-- [ ] modules/cross-cloud/logging
+- [ ] domains/networking
+- [ ] domains/access-control
+- [ ] domains/workload-hosting
+- [ ] domains/service-discovery
+- [ ] domains/observability
+- [ ] platform (naming, tagging)
+- [ ] compliance (controls, policies)
+- [ ] applications/landing-zone
+- [ ] deployments (dev, stg, prd)
 - [ ] New module (please describe)
 - [ ] Cross-cutting / Infrastructure
 

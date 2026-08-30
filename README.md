@@ -118,10 +118,17 @@ Read `deployments/prd/main.tf` before running anything.
 
 ## CI
 
-`fmt`, `validate` across all twelve roots, context boundaries, policy unit
-tests, `tflint` and a Trivy config scan. Every job can fail the build; findings
-are fixed or suppressed in `.trivyignore` with a written reason, never hidden
-behind `continue-on-error`.
+Three jobs:
+
+| Job | What it does |
+| --- | --- |
+| `Terraform` | `fmt -check`, then `init`+`validate` on every module the repo contains, the bounded-context boundary check, and `tflint` |
+| `Compliance policy` | `conftest verify` over the Rego in `compliance/policies` |
+| `Security` | `trivy config` over the whole tree |
+
+Every job can fail the build. There is no `continue-on-error`, no `|| true` and
+no exit-code override anywhere in the workflow: findings are fixed, or they are
+suppressed in `.trivyignore` next to the reason they were accepted.
 
 ## License
 

@@ -33,11 +33,6 @@ Thumbs.db
 .env
 .env.*
 
-# Infracost
-.infracost/
-
-# Terragrunt
-.terragrunt-cache/
 
 # Local plan artifacts used by `make policy-plan`
 *.tfplan

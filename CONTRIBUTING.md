@@ -35,11 +35,11 @@ Thank you for your interest in contributing to this project. This guide outlines
 
 Ensure you have the following tools installed:
 
-- Terraform >= 1.5.0
+- Terraform >= 1.9.0
 - TFLint
-- tfsec
+- Conftest
+- Trivy
 - pre-commit
-- Go (for running tests)
 
 Install pre-commit hooks after cloning:
 
@@ -113,8 +113,7 @@ Pre-commit hooks are **required** for all contributors. The following hooks run 
 - `terraform fmt` - Formats all Terraform files.
 - `terraform validate` - Validates Terraform configuration.
 - `tflint` - Lints Terraform code against best practices.
-- `tfsec` - Scans for security issues.
-- `detect-secrets` - Prevents committing secrets or credentials.
+- `detect-private-key` - Blocks committed private keys.
 - Trailing whitespace and end-of-file fixes.
 
 Install hooks:
@@ -137,10 +136,9 @@ Do not bypass hooks with `--no-verify`. If a hook fails, fix the issue before co
 2. **Make your changes** in focused, atomic commits.
 3. **Run all checks locally** before pushing:
    ```bash
-   terraform fmt -recursive
-   terraform validate
-   tflint
-   tfsec .
+   make check          # fmt, validate every module, policy unit tests, boundaries
+   make lint           # tflint
+   make security       # trivy config scan
    pre-commit run --all-files
    ```
 4. **Push your branch** to your fork:

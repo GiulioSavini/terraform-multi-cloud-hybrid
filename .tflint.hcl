@@ -1,23 +1,25 @@
 config {
-  module = true
-  force  = false
+  # Follow module calls into local child modules so adapter code is linted
+  # through the contract that calls it, not only in isolation.
+  call_module_type = "local"
+  force            = false
 }
 
 plugin "aws" {
   enabled = true
-  version = "0.31.0"
+  version = "0.48.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
 plugin "azurerm" {
   enabled = true
-  version = "0.26.0"
+  version = "0.32.0"
   source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 
 plugin "google" {
   enabled = true
-  version = "0.28.0"
+  version = "0.39.0"
   source  = "github.com/terraform-linters/tflint-ruleset-google"
 }
 

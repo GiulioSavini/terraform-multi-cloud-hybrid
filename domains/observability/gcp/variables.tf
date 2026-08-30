@@ -25,8 +25,3 @@ variable "lb_ip_address" {
   default     = ""
 }
 
-variable "instance_group_name" {
-  description = "MIG name for monitoring"
-  type        = string
-  default     = ""
-}

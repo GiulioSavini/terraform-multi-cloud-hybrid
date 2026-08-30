@@ -1,7 +1,26 @@
 # Suppressions must name the control and the reason. An entry without a reason
-# is a finding someone hid, and review should treat it as one.
+# is a finding someone hid, and review should treat it as one. Everything not
+# listed here fails the build.
 
-# AVD-AWS-0053: the application load balancer is internet-facing by design.
+# AVD-AWS-0053 — the application load balancer is internet-facing by design.
 # Exposure is bounded by access-control's alb_ingress_cidrs, which policy
 # IAM-02 asserts on and which the landing zone publishes as evidence.
 AVD-AWS-0053
+
+# AVD-AZU-0047 — the Azure web tier NSG accepts 80/443 from the internet for
+# the same reason and in the same position as the AWS load balancer above.
+# Only those two ports are open; rule 4096 denies everything else inbound.
+AVD-AZU-0047
+
+# AVD-AWS-0104 — instances need outbound internet for OS patching and agent
+# registration, and reach it through the NAT gateway. Egress is already
+# restricted to tcp/80 and tcp/443; the destination cannot be narrowed further
+# without pinning mirror and API addresses that the providers do not publish.
+AVD-AWS-0104
+
+# AVD-AWS-0132 — buckets are encrypted with SSE-KMS under the AWS-managed key.
+# A customer-managed key is the stricter option, but it needs a key policy
+# granting the ELB log-delivery and CloudWatch Logs service principals, which
+# has to be validated against a live account before it ships. Tracked, not
+# dismissed: until then the data is encrypted, just not under our own key.
+AVD-AWS-0132

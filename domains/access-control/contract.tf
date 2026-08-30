@@ -78,7 +78,6 @@ module "gcp" {
   project        = var.landing_zone
   environment    = var.environment
   gcp_project_id = var.placement.gcp.project_id
-  labels         = var.labels
 
   depends_on = [terraform_data.guards]
 }

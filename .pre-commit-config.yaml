@@ -21,13 +21,6 @@ repos:
       - id: terraform_tflint
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
-      - id: terraform_tfsec
-        args:
-          - --args=--soft-fail
-      - id: terraform_checkov
-        args:
-          - --args=--quiet
-          - --args=--skip-check=CKV_AWS_88,CKV_AZURE_35
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8

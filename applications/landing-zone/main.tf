@@ -77,8 +77,7 @@ module "networking" {
   cross_cloud_shared_key          = var.cross_cloud_shared_key
   flow_log_storage_account_id     = var.flow_log_storage_account_id
 
-  tags   = module.tags["networking"].tags
-  labels = module.tags["networking"].labels
+  tags = module.tags["networking"].tags
 }
 
 module "access_control" {
@@ -100,8 +99,7 @@ module "access_control" {
 
   alb_ingress_cidrs = var.alb_ingress_cidrs
 
-  tags   = module.tags["access-control"].tags
-  labels = module.tags["access-control"].labels
+  tags = module.tags["access-control"].tags
 }
 
 module "workload_hosting" {

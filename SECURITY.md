@@ -63,14 +63,17 @@ This project enforces a strict **no hard-coded secrets** policy. The following m
 - Use Terraform variables with sensitive flags for secret values.
 - Use cloud-native secret management services (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager).
 - Use environment variables or CI/CD secret injection for automation.
-- Pre-commit hooks with `detect-secrets` are enforced to prevent accidental commits of sensitive data.
+- Pre-commit hooks with `detect-private-key` are enforced to prevent accidental commits of key material.
 
 ### Security Scanning
 
 This project uses the following tools to maintain security:
 
-- **tfsec** - Static analysis of Terraform code for security misconfigurations.
-- **detect-secrets** - Pre-commit hook to prevent secrets from being committed.
+- **Trivy** - Static analysis of the Terraform sources for misconfiguration. Findings
+  fail CI; suppressions live in `.trivyignore` with a written reason.
+- **Conftest** - Unit-tested Rego policies in `compliance/policies`, mapped to the
+  controls in `compliance/controls`.
+- **detect-private-key** - Pre-commit hook that blocks committed private keys.
 - **Dependabot** - Automated dependency updates for known vulnerabilities.
 
 ## Contact

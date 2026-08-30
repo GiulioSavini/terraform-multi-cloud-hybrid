@@ -56,8 +56,3 @@ variable "tags" {
   type        = map(string)
 }
 
-variable "labels" {
-  description = "GCP-normalised label set from platform/tagging."
-  type        = map(string)
-  default     = {}
-}

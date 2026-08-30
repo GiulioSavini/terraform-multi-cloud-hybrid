@@ -73,7 +73,6 @@ module "azure" {
 
   resource_group_name = var.placement.azure.resource_group_name
   location            = var.placement.azure.location
-  web_subnet_id       = var.networks["azure"].subnets.web[0]
   app_subnet_id       = var.networks["azure"].subnets.app[0]
 
   vm_sku         = var.instance_size.azure
@@ -93,10 +92,9 @@ module "gcp" {
   project     = var.landing_zone
   environment = var.environment
 
-  gcp_project_id    = var.placement.gcp.project_id
-  region            = var.placement.gcp.region
-  network_self_link = var.gcp_self_links.network
-  subnet_self_link  = var.gcp_self_links.web_subnet
+  gcp_project_id   = var.placement.gcp.project_id
+  region           = var.placement.gcp.region
+  subnet_self_link = var.gcp_self_links.web_subnet
 
   service_account_email = var.workload_identity["gcp"].service_account_email
 

@@ -57,14 +57,14 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: environments/${{ matrix.environment }}
+        working-directory: deployments/${{ matrix.environment }}
 
       - name: Terraform Plan (Drift Detection)
         id: plan
         run: |
           terraform plan -var-file=terraform.tfvars -detailed-exitcode -no-color 2>&1 | tee drift-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
-        working-directory: environments/${{ matrix.environment }}
+        working-directory: deployments/${{ matrix.environment }}
         continue-on-error: true
 
       - name: Create Issue on Drift
@@ -73,7 +73,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const drift = fs.readFileSync('environments/${{ matrix.environment }}/drift-output.txt', 'utf8');
+            const drift = fs.readFileSync('deployments/${{ matrix.environment }}/drift-output.txt', 'utf8');
             const truncated = drift.length > 60000 ? drift.substring(0, 60000) + '\n... (truncated)' : drift;
             const title = `🔄 Drift detected in \`${{ matrix.environment }}\` - ${new Date().toISOString().split('T')[0]}`;
             const existing = await github.rest.issues.listForRepo({

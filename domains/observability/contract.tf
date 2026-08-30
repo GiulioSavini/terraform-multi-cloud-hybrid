@@ -68,12 +68,11 @@ module "gcp" {
   count  = local.gcp_enabled ? 1 : 0
   source = "./gcp"
 
-  project             = var.landing_zone
-  environment         = var.environment
-  gcp_project_id      = var.placement.gcp.project_id
-  notification_email  = var.alarm_email
-  lb_ip_address       = try(var.endpoints["gcp"].address, "")
-  instance_group_name = var.workload_refs["gcp"].instance_group
+  project            = var.landing_zone
+  environment        = var.environment
+  gcp_project_id     = var.placement.gcp.project_id
+  notification_email = var.alarm_email
+  lb_ip_address      = try(var.endpoints["gcp"].address, "")
 
   depends_on = [terraform_data.guards]
 }
@@ -86,8 +85,6 @@ module "cross_cloud" {
   environment = var.environment
 
   gcp_project_id                   = var.placement.gcp.project_id
-  azure_resource_group_name        = var.placement.azure.resource_group_name
-  azure_location                   = var.placement.azure.location
   azure_log_analytics_workspace_id = module.azure[0].log_analytics_workspace_id
 
   retention_days = var.retention_days

@@ -26,10 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GCP DNS module with Cloud DNS managed zones and record sets.
 - Cross-cloud VPN module for site-to-site connectivity between AWS, Azure, and GCP.
 - Cross-cloud logging module for centralized log aggregation across cloud providers.
-- Pre-commit hooks configuration with terraform fmt, validate, tflint, and tfsec.
+- Pre-commit hooks configuration with terraform fmt, validate and tflint.
 - CI/CD pipeline with GitHub Actions for automated validation and deployment.
 - Comprehensive documentation for all modules with usage examples.
 - TFLint configuration with AWS, Azure, and GCP plugins.
-- Security scanning with tfsec and detect-secrets integration.
+- Security scanning with Trivy, and Conftest policies mapped to CIS, ISO 27001,
+  SOC 2 and NIS2 controls.
 
 [1.0.0]: https://github.com/GiulioSavini/terraform-multi-cloud-hybrid/releases/tag/v1.0.0

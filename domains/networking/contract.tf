@@ -108,7 +108,6 @@ module "gcp" {
   app_subnet_cidr  = cidrsubnet(var.address_space.gcp, 8, 2)
   data_subnet_cidr = cidrsubnet(var.address_space.gcp, 8, 3)
 
-  labels = var.labels
 
   depends_on = [terraform_data.guards]
 }

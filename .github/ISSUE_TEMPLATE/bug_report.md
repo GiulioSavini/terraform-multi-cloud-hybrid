@@ -14,23 +14,15 @@ A clear and concise description of what the bug is.
 
 Which module is affected by this bug?
 
-- [ ] modules/aws/network
-- [ ] modules/aws/compute
-- [ ] modules/aws/security
-- [ ] modules/aws/monitoring
-- [ ] modules/aws/dns
-- [ ] modules/azure/network
-- [ ] modules/azure/compute
-- [ ] modules/azure/security
-- [ ] modules/azure/monitoring
-- [ ] modules/azure/dns
-- [ ] modules/gcp/network
-- [ ] modules/gcp/compute
-- [ ] modules/gcp/security
-- [ ] modules/gcp/monitoring
-- [ ] modules/gcp/dns
-- [ ] modules/cross-cloud/vpn
-- [ ] modules/cross-cloud/logging
+- [ ] domains/networking
+- [ ] domains/access-control
+- [ ] domains/workload-hosting
+- [ ] domains/service-discovery
+- [ ] domains/observability
+- [ ] platform (naming, tagging)
+- [ ] compliance (controls, policies)
+- [ ] applications/landing-zone
+- [ ] deployments (dev, stg, prd)
 - [ ] Other (please specify)
 
 ## Environment

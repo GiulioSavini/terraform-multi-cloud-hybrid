@@ -23,11 +23,6 @@ variable "app_subnet_id" {
   type        = string
 }
 
-variable "web_subnet_id" {
-  description = "Subnet ID for Load Balancer"
-  type        = string
-}
-
 variable "vm_sku" {
   description = "VM SKU for the scale set"
   type        = string

@@ -43,8 +43,3 @@ variable "enable_cloud_nat" {
   default     = true
 }
 
-variable "labels" {
-  description = "Common labels"
-  type        = map(string)
-  default     = {}
-}

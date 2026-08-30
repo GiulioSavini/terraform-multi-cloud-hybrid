@@ -69,7 +69,7 @@ else
 fi
 
 # --- Generate tfvars ---
-TFVARS_FILE="environments/$ENV/terraform.tfvars"
+TFVARS_FILE="deployments/$ENV/terraform.tfvars"
 echo ""
 echo "=============================================="
 echo -e "  Generating ${GREEN}$TFVARS_FILE${NC}"
@@ -107,6 +107,6 @@ echo -e "Review the file and update any ${YELLOW}CHANGE_ME${NC} values before ap
 echo ""
 echo "Next steps:"
 echo "  1. Review: cat $TFVARS_FILE"
-echo "  2. Init:   cd environments/$ENV && terraform init"
+echo "  2. Init:   cd deployments/$ENV && terraform init"
 echo "  3. Plan:   terraform plan -var-file=terraform.tfvars"
 echo "  4. Apply:  terraform apply -var-file=terraform.tfvars"

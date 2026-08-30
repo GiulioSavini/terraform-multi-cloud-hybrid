@@ -17,7 +17,7 @@ Before submitting this pull request, confirm the following:
 
 - [ ] I have run `terraform fmt -recursive` and all files are properly formatted.
 - [ ] I have run `terraform validate` and the configuration is valid.
-- [ ] I have run `tfsec` and there are no security issues.
+- [ ] I have run `make check`, `make lint` and `make security`, and all pass.
 - [ ] All existing tests pass and new tests have been added where appropriate.
 - [ ] I have updated the documentation (READMEs, variable descriptions, output descriptions).
 - [ ] No secrets, credentials, or sensitive values are committed in this PR.

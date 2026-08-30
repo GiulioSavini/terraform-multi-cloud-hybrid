@@ -44,5 +44,13 @@ resource "azurerm_storage_account" "security_logs" {
     }
   }
 
+  # Network Watcher writes flow logs through the AzureServices bypass; nothing
+  # else should reach this account over the public endpoint.
+  network_rules {
+    default_action             = "Deny"
+    bypass                     = ["AzureServices", "Logging", "Metrics"]
+    virtual_network_subnet_ids = var.allowed_subnet_ids
+  }
+
   tags = local.common_tags
 }
